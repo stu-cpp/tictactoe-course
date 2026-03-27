@@ -33,7 +33,7 @@
    cd tictactoe-course
    git remote remove origin
    git remote add origin <адрес Вашего репозитория>
-   git push origin master 
+   git push --set-upstream origin master 
    ```
 
 3. **Защита реализации**. Необходимо защитить преподавателю вашу реализацию,
