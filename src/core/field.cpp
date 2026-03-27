@@ -7,6 +7,7 @@
 
 namespace ttt::game {
 
+  
 Obstacle::Obstacle(int seq_len) {
   m_left_size = m_right_size = m_down_size = m_up_size = 0;
   m_moves = new char[seq_len + 1];
@@ -67,7 +68,7 @@ Obstacle::~Obstacle() { delete[] m_moves; }
 
 int Obstacle::get_moves_len() const { return strlen(m_moves); }
 
-void ttt::game::Obstacle::move_point(int &x, int &y, char move) {
+void Obstacle::move_point(int &x, int &y, char move) {
   switch (move) {
   case 'D':
     y--;
