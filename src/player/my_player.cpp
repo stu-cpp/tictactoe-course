@@ -5,14 +5,14 @@
 namespace ttt::my_player {
 
  
-// IPlayer: базовые методы 
+// IPlayer: базовые методы
+ 
 
 void MyPlayer::set_sign(Sign sign) { m_sign = sign; }
 const char *MyPlayer::get_name() const { return m_name; }
 
 
 // Вспомогательные функции
-
 
 // base^exp, целочисленно
 int MyPlayer::ipow(int base, int exp) {
@@ -22,8 +22,8 @@ int MyPlayer::ipow(int base, int exp) {
   return result;
 }
 
-// Шаг 2/3: проверяем, образует ли постановка знака sign в (x, y) линию >= L
-// Не изменяет state — только смотрит на уже стоящие знаки + воображаемый ход
+// Шаг 2/3: проверяем, образует ли постановка знака sign в (x,y) линию >= L.
+// Не изменяет state — только считает по уже стоящим знакам + воображаемый ход.
 bool MyPlayer::check_win(const State &state, int x, int y, Sign sign) const {
   if (state.get_value(x, y) != Sign::NONE)
     return false;
@@ -32,7 +32,7 @@ bool MyPlayer::check_win(const State &state, int x, int y, Sign sign) const {
   const int cols = state.get_opts().cols;
   const int rows = state.get_opts().rows;
 
-  // 4 направления: горизонталь, вертикаль и две диагонали
+  // 4 направления: горизонталь, вертикаль, диагональ 1, диагональ 2
   const int dirs[4][2] = {{1, 0}, {0, 1}, {1, 1}, {1, -1}};
 
   for (auto &d : dirs) {
@@ -61,7 +61,7 @@ bool MyPlayer::check_win(const State &state, int x, int y, Sign sign) const {
   return false;
 }
 
-
+ 
 // Шаг 5: эвристика
 // Формула: W = base^k * M
 //   k — длина цепочки (1 <= k < L)
@@ -69,7 +69,9 @@ bool MyPlayer::check_win(const State &state, int x, int y, Sign sign) const {
 // Score = сумма_весов_O - сумма_весов_X
 
 
-void MyPlayer::scan_line(const State &state, int x0, int y0, int dx, int dy, int len,  int &score_o, int &score_x) const {
+void MyPlayer::scan_line(const State &state,
+                         int x0, int y0, int dx, int dy, int len,
+                         int &score_o, int &score_x) const {
   const int L    = state.get_opts().win_len;
   const int cols = state.get_opts().cols;
   const int rows = state.get_opts().rows;
@@ -150,7 +152,7 @@ int MyPlayer::evaluate(const State &state) const {
   for (int x = 0; x < cols; ++x)
     scan_line(state, x, 0, 0, 1, rows, score_o, score_x);
 
-  // Диагонали ↘ (сверху-слева вниз-вправо)
+  // Диагонали 
   for (int x = 0; x < cols; ++x) {
     int len = std::min(cols - x, rows);
     scan_line(state, x, 0, 1, 1, len, score_o, score_x);
@@ -160,7 +162,7 @@ int MyPlayer::evaluate(const State &state) const {
     scan_line(state, 0, y, 1, 1, len, score_o, score_x);
   }
 
-  // Диагонали ↗ (снизу-слева вверх-вправо)
+  // Диагонали 
   for (int x = 0; x < cols; ++x) {
     int len = std::min(cols - x, rows);
     scan_line(state, x, rows - 1, 1, -1, len, score_o, score_x);
@@ -173,9 +175,10 @@ int MyPlayer::evaluate(const State &state) const {
   return score_o - score_x;
 }
 
-
+ 
 // Шаг 5: Minimax с альфа-бета отсечением
 // Глубина D в полуходах. maximizing=true — ход O (компьютер).
+
 
 int MyPlayer::minimax(State state, int depth, int alpha, int beta,
                       bool maximizing) const {
@@ -185,15 +188,18 @@ int MyPlayer::minimax(State state, int depth, int alpha, int beta,
 
   // Терминальное состояние — если есть победитель
   if (state.get_winner() == m_sign)
-    return 1000000 + depth;   // победа O — чем быстрее, тем лучше
+    return 1000000 + depth;   // победа O, чем быстрее тем лучше
   if (state.get_winner() == opp)
-    return -1000000 - depth;  // победа X — чем дальше, тем лучше
+    return -1000000 - depth;  // победа X, чем дальше тем лучше
 
   // Достигли дна — возвращаем эвристику
   if (depth == 0)
     return evaluate(state);
 
-  // Собираем свободные клетки (только соседние с занятыми — оптимизация)
+  // Кто сейчас ходит в симуляции
+  Sign cur_sign = maximizing ? m_sign : opp;
+
+  // Собираем кандидатные клетки — свободные соседи занятых (радиус 1)
   std::vector<Point> candidates;
   std::vector<bool> visited(cols * rows, false);
 
@@ -201,7 +207,6 @@ int MyPlayer::minimax(State state, int depth, int alpha, int beta,
     for (int y = 0; y < rows; ++y) {
       Sign v = state.get_value(x, y);
       if (v != Sign::X && v != Sign::O) continue;
-      // смотрим клетки вокруг в радиусе 1
       for (int dx = -1; dx <= 1; ++dx) {
         for (int dy = -1; dy <= 1; ++dy) {
           int nx = x + dx, ny = y + dy;
@@ -217,7 +222,7 @@ int MyPlayer::minimax(State state, int depth, int alpha, int beta,
     }
   }
 
-  // Если нет кандидатов — ничья
+  // Нет кандидатов — ничья
   if (candidates.empty())
     return evaluate(state);
 
@@ -226,7 +231,7 @@ int MyPlayer::minimax(State state, int depth, int alpha, int beta,
     int best = INT_MIN;
     for (const Point &p : candidates) {
       State next = state;
-      next.process_move(p);
+      next.process_move(cur_sign, p.x, p.y); 
       int score = minimax(next, depth - 1, alpha, beta, false);
       if (score > best) best = score;
       if (best > alpha) alpha = best;
@@ -238,7 +243,7 @@ int MyPlayer::minimax(State state, int depth, int alpha, int beta,
     int best = INT_MAX;
     for (const Point &p : candidates) {
       State next = state;
-      next.process_move(p);
+      next.process_move(cur_sign, p.x, p.y); // <-- правильный вызов API
       int score = minimax(next, depth - 1, alpha, beta, true);
       if (score < best) best = score;
       if (best < beta) beta = best;
@@ -248,8 +253,8 @@ int MyPlayer::minimax(State state, int depth, int alpha, int beta,
   }
 }
 
-
-// make_move — главный метод
+ 
+// make_move — главный метод, строго по алгоритму из ТЗ
 
 
 Point MyPlayer::make_move(const State &state) {
@@ -264,17 +269,16 @@ Point MyPlayer::make_move(const State &state) {
       if (state.get_value(x, y) == Sign::NONE)
         free_cells.push_back({x, y});
 
-  // Если ходов нет — сигнализируем (-1, -1)
   if (free_cells.empty())
     return {-1, -1};
 
-  Point best_move = free_cells[0]; // fallback
+  Point best_move = free_cells[0];
 
   //  Шаг 2: тактика — немедленная победа O 
   for (const Point &p : free_cells) {
     if (check_win(state, p.x, p.y, m_sign)) {
       best_move = p;
-      goto step6; // нашли — сразу к шагу 6
+      goto step6;
     }
   }
 
@@ -288,14 +292,12 @@ Point MyPlayer::make_move(const State &state) {
 
   //  Шаг 4: обработка флага last_move_for_O 
   if (m_last_move_for_o) {
-    // Пытаемся собрать линию (цель — ничья)
     for (const Point &p : free_cells) {
       if (check_win(state, p.x, p.y, m_sign)) {
         best_move = p;
         goto step6;
       }
     }
-    // Ни одна клетка не даёт линию — снимаем флаг, идём к шагу 5
     m_last_move_for_o = false;
   }
 
@@ -304,11 +306,11 @@ Point MyPlayer::make_move(const State &state) {
     int best_score = INT_MIN;
 
     for (const Point &p : free_cells) {
-      // Ставим O и запускаем симуляцию на глубину D-1 (один полуход уже сделан)
       State next = state;
-      next.process_move(p);
+      next.process_move(m_sign, p.x, p.y); // ставим O
 
-      int score = minimax(next, m_depth - 1, INT_MIN, INT_MAX, false); // следующий ход — X
+      // следующий ход противника (minimizing)
+      int score = minimax(next, m_depth - 1, INT_MIN, INT_MAX, false);
 
       if (score > best_score) {
         best_score = score;

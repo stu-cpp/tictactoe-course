@@ -22,7 +22,7 @@ class MyPlayer : public IPlayer {
 
 public:
 
-  MyPlayer(const char *name, int depth = 4, int base = 3)
+  MyPlayer(const char *name, int depth = 3, int base = 3)
       : m_sign(Sign::NONE), m_name(name),
         m_depth(depth), m_base(base),
         m_last_move_for_o(false) {}
