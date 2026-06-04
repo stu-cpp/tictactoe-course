@@ -1,0 +1,28 @@
+name: Build LaTeX Report
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install TeX Live
+        run: sudo apt-get update && sudo apt-get install -y texlive texlive-lang-cyrillic texlive-fonts-recommended texlive-latex-extra
+      
+      - name: Compile LaTeX
+        run: |
+          cd report
+          pdflatex -interaction=nonstopmode main.tex
+          pdflatex -interaction=nonstopmode main.tex
+      
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: report
+          path: report/main.pdf
