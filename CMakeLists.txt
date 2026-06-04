@@ -56,5 +56,5 @@ add_subdirectory("tests")
 
 # NOTE: this submodule builds sources for remote game
 if (BUILD_TTTREMOTE)
-  add_subdirectory("src/remote")
+# add_subdirectory("src/remote")
 endif()

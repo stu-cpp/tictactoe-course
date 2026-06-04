@@ -12,8 +12,7 @@ void ConsoleWriter::print_game_state(const State &state) {
   const int cols = state.get_opts().cols;
   const int rows = state.get_opts().rows;
 
-  // print column indices
-  std::cout << "   "; // extra space for column index
+  std::cout << "   "; 
   for (int x = 0; x < cols; ++x) {
     std::cout << std::setw(2) << x % 10;
   }

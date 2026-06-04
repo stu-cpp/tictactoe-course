@@ -13,7 +13,6 @@ int main() {
   opts.win_len = 5;
   opts.max_moves = 400;
   
-  // Используем инициализатор без препятствий (params: 1.0 - 100% игровых клеток)
   RandomObstaclesFI initializer(1.0, 0, 0);
   State state(opts, &initializer);
   state.reset();
@@ -24,12 +23,13 @@ int main() {
   std::cout << "========================================\n";
   std::cout << "=== GAME: MyBot (X) vs Human (O) ===\n";
   std::cout << "========================================\n";
-  std::cout << "Coordinates: x y (0-19)\n\n";
+  std::cout << "Enter x y (0-19), example: 10 10\n\n";
   
   bool bot_turn = true;
+  int move_count = 0;
   
-  while (state.get_status() == Status::ACTIVE) {
-    // РИСУЕМ ПОЛЕ
+  while (state.get_status() == Status::ACTIVE && move_count < opts.max_moves) {
+    // Показываем поле
     std::cout << "   ";
     for (int x = 0; x < opts.cols; ++x) std::cout << (x % 10) << " ";
     std::cout << "\n";
@@ -47,7 +47,7 @@ int main() {
     std::cout << "\n";
     
     if (bot_turn) {
-      std::cout << "Bot is thinking...\n";
+      std::cout << "Bot thinking...\n";
       Point move = bot.make_move(state);
       std::cout << "Bot plays: " << move.x << " " << move.y << "\n";
       state.process_move(Sign::X, move.x, move.y);
@@ -60,7 +60,6 @@ int main() {
       int x, y;
       std::cout << "Your move (O) - enter x y: ";
       std::cin >> x >> y;
-      std::cout << "\n";
       
       if (x < 0 || x >= opts.cols || y < 0 || y >= opts.rows) {
         std::cout << "Invalid! Use 0-19\n";
@@ -80,6 +79,7 @@ int main() {
     }
     
     bot_turn = !bot_turn;
+    move_count++;
   }
   
   if (state.get_winner() == Sign::NONE) {
